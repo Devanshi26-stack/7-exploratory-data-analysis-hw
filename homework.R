@@ -1,3 +1,8 @@
+#PSYC 259 Homework - Writing functions and iteration
+#For full credit, answer at least 7/10 questions
+
+#List names of students collaborating with: 
+
 library(tidyverse)
 library(DataExplorer)
 library(rstatix)
