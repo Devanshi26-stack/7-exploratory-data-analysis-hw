@@ -1,18 +1,19 @@
-#PSYC 259 Homework - Writing functions and iteration
-#For full credit, answer at least 7/10 questions
+# PSYC 259 Homework - Writing functions and iteration
+# For full credit, answer at least 7/10 questions
 
-#List names of students collaborating with: Devanshi 
+# List names of students collaborating with: Devanshi
 
 library(tidyverse)
 library(DataExplorer)
 install.packages("DataExplorer")
 library(rstatix)
-install.packages("rstatix"
-                )
+install.packages("rstatix")
 
 stations <- c("KCLT", "KCQT", "KHOU", "KIND", "KJAX", "KMDW", "KNYC", "KPHL", "KPHX", "KSEA")
-cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville", 
-            "Chicago", "New York City", "Philadelphia", "Phoenix", "Seattle")
+cities <- c(
+  "Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville",
+  "Chicago", "New York City", "Philadelphia", "Phoenix", "Seattle"
+)
 
 # QUESTION 1
 #> The data files are in the directory 'us-weather-history'
@@ -20,18 +21,19 @@ cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville
 #> the data file and adds the station name in a column
 #> Make sure the date column is a date
 #> The function should return a tibble
-#> Call the function "read_weather" 
+#> Call the function "read_weather"
 #> Check by reading/glimpsing a single station's file
 
-read_weather <- function(station) { 
-file_path <- file.path("us-weather-history", paste0(station, ".csv")) 
-read_csv(file_path, show_col_types = FALSE) %>% mutate(station = station, date = ymd(date))}
+read_weather <- function(station) {
+  file_path <- file.path("us-weather-history", paste0(station, ".csv"))
+  read_csv(file_path, show_col_types = FALSE) %>% mutate(station = station, date = ymd(date))
+}
 read_weather("KCLT") %>% glimpse()
 
 
 # QUESTION 2
 #> Use map() and your new function to read in all 10 stations
-#> Note that because map_dfr() has been superseded, and map() does not automatically bind rows, 
+#> Note that because map_dfr() has been superseded, and map() does not automatically bind rows,
 #> you will need to do so in the code with bind_rows()
 #> Save the resulting dataset to "ds"
 
@@ -42,7 +44,7 @@ count(ds, station)
 # QUESTION 3
 #> Make a factor called "city" based on the station variable
 #> (station should be the level and city should be the label)
-#> Use rstatix::freq_tables() to check that there are 365 days of data for each city 
+#> Use rstatix::freq_tables() to check that there are 365 days of data for each city
 #> and save the results to a new tibble
 #> Write a logical statement that would trigger a warning if any city did not have 365 days
 # QUESTION 3
@@ -51,10 +53,11 @@ ds <- ds %>% mutate(city = factor(station, levels = stations, labels = cities))
 
 city_counts <- freq_table(ds, city)
 city_counts
-#could not find freq_tables so used freq_table instead
+# could not find freq_tables so used freq_table instead
 
-if (any(city_counts$n != 365)) {warning("at least one city does not have 365 days in its data")}
-
+if (any(city_counts$n != 365)) {
+  warning("at least one city does not have 365 days in its data")
+}
 
 
 # QUESTION 4
@@ -62,9 +65,14 @@ if (any(city_counts$n != 365)) {warning("at least one city does not have 365 day
 #> if your check worked? Create a test to mess up the dataset to make sure that your
 #> check does throw an error if the conditions aren't met
 check_days <- function(data) {
-counts <- freq_table(data, city) if (any(counts$n != 365)) { warning("at least one city does not have 365 days in its data")} counts}
+  counts <- freq_table(data, city)
+  if (any(counts$n != 365)) {
+    warning("at least one city does not have 365 days in its data")
+  }
+  counts
+}
 
-# so now charlotte does not have 365 days 
+# so now charlotte does not have 365 days
 check_days(ds_test)
 
 
@@ -73,12 +81,12 @@ check_days(ds_test)
 #> questions so that you have the right data to work with.
 
 # QUESTION 5
-#> Find a function that lets you pull out the month from the date 
+#> Find a function that lets you pull out the month from the date
 #> and make "month" a factor as a new variable in ds
 
 ds <- ds %>% mutate(month = month(date, label = TRUE))
 
-#checking it
+# checking it
 class(ds$month)
 levels(ds$month)
 count(ds, month)
@@ -93,14 +101,17 @@ count(ds, month)
 
 temp_outliers <- ds %>% identify_outliers(actual_mean_temp)
 
-temp_outliers   
-ds %>% anti_join(temp_outliers, by = names(ds)) %>% group_by(month) %>% get_summary_stats(actual_mean_temp, type = "mean_se")
+temp_outliers
+ds %>%
+  anti_join(temp_outliers, by = names(ds)) %>%
+  group_by(month) %>%
+  get_summary_stats(actual_mean_temp, type = "mean_se")
 
-#not sure if i got this right
+# not sure if i got this right
 
 # QUESTION 8
 #> Use the Data Explorer package to plot boxplots of all of the numeric variables in the dataset
-#> grouped by city, then do the same thing grouped by month. 
+#> grouped by city, then do the same thing grouped by month.
 #> Finally, use plot_correlation to investigate correlations between the continuous variables only
 #> Check the documentation for plot_correlation for an easy way to do this
 
@@ -109,8 +120,8 @@ plot_boxplot(ds, by = "month")
 
 plot_correlation(ds, type = "continuous")
 
-#there seems to a lot of missing values
-#I keep getting warnings for this
+# there seems to a lot of missing values
+# I keep getting warnings for this
 
 # QUESTION 9
 #> Create a scatterplot of actual_mean_temp (y axis) by date (x axis)
@@ -118,7 +129,7 @@ plot_correlation(ds, type = "continuous")
 #> Make the points different colors according to month
 ggplot(ds, aes(x = date, y = actual_mean_temp, color = month)) +
   geom_point() +
-  facet_wrap(~ city, ncol = 4)
+  facet_wrap(~city, ncol = 4)
 
 # QUESTION 10
 #> Write a function that takes the dataset and the abbreviate month as arguments
@@ -137,11 +148,13 @@ plot_month <- function(data, mon) {
     geom_point() +
     geom_line() +
     ggtitle(mon)
-  
+
   ggsave(paste0("eda/", mon, ".png"), plot = p)
   p
 }
 
 plot_month(ds, "Jan")
 walk(levels(ds$month), ~ plot_month(ds, .x))
-#i kept seeing an error for this one - so not sure if i got it right
+# i kept seeing an error for this one - so not sure if i got it right
+
+parse(file = "homework.R")
