@@ -1,11 +1,14 @@
 #PSYC 259 Homework - Writing functions and iteration
 #For full credit, answer at least 7/10 questions
 
-#List names of students collaborating with: 
+#List names of students collaborating with: Devanshi 
 
 library(tidyverse)
 library(DataExplorer)
+install.packages("DataExplorer")
 library(rstatix)
+install.packages("rstatix"
+                )
 
 stations <- c("KCLT", "KCQT", "KHOU", "KIND", "KJAX", "KMDW", "KNYC", "KPHL", "KPHX", "KSEA")
 cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville", 
@@ -20,6 +23,10 @@ cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville
 #> Call the function "read_weather" 
 #> Check by reading/glimpsing a single station's file
 
+read_weather <- function(station) { 
+file_path <- file.path("us-weather-history", paste0(station, ".csv")) 
+read_csv(file_path, show_col_types = FALSE) %>% mutate(station = station, date = ymd(date))}
+read_weather("KCLT") %>% glimpse()
 
 
 # QUESTION 2
@@ -28,8 +35,9 @@ cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville
 #> you will need to do so in the code with bind_rows()
 #> Save the resulting dataset to "ds"
 
-
-
+ds <- map(stations, read_weather) %>% bind_rows()
+glimpse(ds)
+count(ds, station)
 
 # QUESTION 3
 #> Make a factor called "city" based on the station variable
@@ -37,7 +45,18 @@ cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville
 #> Use rstatix::freq_tables() to check that there are 365 days of data for each city 
 #> and save the results to a new tibble
 #> Write a logical statement that would trigger a warning if any city did not have 365 days
+# QUESTION 3
 
+ds <- ds %>%
+  mutate(city = factor(station, levels = stations, labels = cities))
+
+city_counts <- freq_table(ds, city)
+city_counts
+#could not find freq_tables so used freq_table instead
+
+if (any(city_counts$n != 365)) {
+  warning("At least one city does not have 365 days of data")
+}
 
 
 
@@ -45,10 +64,19 @@ cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville
 #> In question 3, all of the cities do have 365 days of data, so how would you know
 #> if your check worked? Create a test to mess up the dataset to make sure that your
 #> check does throw an error if the conditions aren't met
+check_days <- function(data) {
+  counts <- freq_table(data, city)
+  if (any(counts$n != 365)) {
+    warning("At least one city does not have 365 days of data")
+  }
+  counts
+}
+
+# so now charlotte does not have 365 days 
+check_days(ds_test)
 
 
-
-#> At this point, your data should look like the "compiled_data.csv" file
+  #> At this point, your data should look like the "compiled_data.csv" file
 #> in data-clean. If it isn't, read in that file to use for the remaining
 #> questions so that you have the right data to work with.
 
@@ -56,6 +84,13 @@ cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville
 #> Find a function that lets you pull out the month from the date 
 #> and make "month" a factor as a new variable in ds
 
+ds <- ds %>%
+  mutate(month = month(date, label = TRUE))
+
+#checking it
+class(ds$month)
+levels(ds$month)
+count(ds, month)
 
 
 # QUESTION 7
@@ -65,6 +100,16 @@ cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville
 #> get_summary_stats() to get the mean and SE for actual_mean_temp
 #> by month.
 
+temp_outliers <- ds %>%
+  identify_outliers(actual_mean_temp)
+
+temp_outliers   
+ds %>%
+  anti_join(temp_outliers, by = names(ds)) %>%
+  group_by(month) %>%
+  get_summary_stats(actual_mean_temp, type = "mean_se")
+
+#not sure if i got this right
 
 # QUESTION 8
 #> Use the Data Explorer package to plot boxplots of all of the numeric variables in the dataset
@@ -72,12 +117,21 @@ cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville
 #> Finally, use plot_correlation to investigate correlations between the continuous variables only
 #> Check the documentation for plot_correlation for an easy way to do this
 
+plot_boxplot(ds, by = "city")
+plot_boxplot(ds, by = "month")
+
+plot_correlation(ds, type = "continuous")
+
+#there seems to a lot of missing values
+#I keep getting warnings for this
 
 # QUESTION 9
 #> Create a scatterplot of actual_mean_temp (y axis) by date (x axis)
 #> Use facet_wrap to make a separate plot for each city (3 columns)
 #> Make the points different colors according to month
-
+ggplot(ds, aes(x = date, y = actual_mean_temp, color = month)) +
+  geom_point() +
+  facet_wrap(~ city, ncol = 4)
 
 # QUESTION 10
 #> Write a function that takes the dataset and the abbreviate month as arguments
@@ -89,4 +143,17 @@ cities <- c("Charlotte", "Los Angeles", "Houston", "Indianapolis", "Jacksonville
 #> The eda folder has an example of what each plot should look like
 #> Call the function in a map or loop to generate graphs for each month
 
+plot_month <- function(data, mon) {
+  p <- data %>%
+    filter(month == mon) %>%
+    ggplot(aes(x = date, y = actual_mean_temp, color = city)) +
+    geom_point() +
+    geom_line() +
+    ggtitle(mon)
+  
+  ggsave(paste0("eda/", mon, ".png"), plot = p)
+  p
+}
 
+plot_month(ds, "Jan")
+walk(levels(ds$month), ~ plot_month(ds, .x))
