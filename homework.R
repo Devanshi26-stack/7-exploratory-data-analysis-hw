@@ -54,9 +54,7 @@ city_counts <- freq_table(ds, city)
 city_counts
 #could not find freq_tables so used freq_table instead
 
-if (any(city_counts$n != 365)) {
-  warning("At least one city does not have 365 days of data")
-}
+if (any(city_counts$n != 365)) {warning("at least one city does not have 365 days in its data")}
 
 
 
@@ -65,18 +63,13 @@ if (any(city_counts$n != 365)) {
 #> if your check worked? Create a test to mess up the dataset to make sure that your
 #> check does throw an error if the conditions aren't met
 check_days <- function(data) {
-  counts <- freq_table(data, city)
-  if (any(counts$n != 365)) {
-    warning("At least one city does not have 365 days of data")
-  }
-  counts
-}
+counts <- freq_table(data, city) if (any(counts$n != 365)) { warning("at least one city does not have 365 days in its data")} counts}
 
 # so now charlotte does not have 365 days 
 check_days(ds_test)
 
 
-  #> At this point, your data should look like the "compiled_data.csv" file
+#> At this point, your data should look like the "compiled_data.csv" file
 #> in data-clean. If it isn't, read in that file to use for the remaining
 #> questions so that you have the right data to work with.
 
@@ -84,8 +77,7 @@ check_days(ds_test)
 #> Find a function that lets you pull out the month from the date 
 #> and make "month" a factor as a new variable in ds
 
-ds <- ds %>%
-  mutate(month = month(date, label = TRUE))
+ds <- ds %>% mutate(month = month(date, label = TRUE))
 
 #checking it
 class(ds$month)
@@ -100,14 +92,10 @@ count(ds, month)
 #> get_summary_stats() to get the mean and SE for actual_mean_temp
 #> by month.
 
-temp_outliers <- ds %>%
-  identify_outliers(actual_mean_temp)
+temp_outliers <- ds %>% identify_outliers(actual_mean_temp)
 
 temp_outliers   
-ds %>%
-  anti_join(temp_outliers, by = names(ds)) %>%
-  group_by(month) %>%
-  get_summary_stats(actual_mean_temp, type = "mean_se")
+ds %>% anti_join(temp_outliers, by = names(ds)) %>% group_by(month) %>% get_summary_stats(actual_mean_temp, type = "mean_se")
 
 #not sure if i got this right
 
@@ -157,3 +145,4 @@ plot_month <- function(data, mon) {
 
 plot_month(ds, "Jan")
 walk(levels(ds$month), ~ plot_month(ds, .x))
+#i kept seeing an error for this one - so not sure if i got it right
