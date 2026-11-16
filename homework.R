@@ -47,8 +47,7 @@ count(ds, station)
 #> Write a logical statement that would trigger a warning if any city did not have 365 days
 # QUESTION 3
 
-ds <- ds %>%
-  mutate(city = factor(station, levels = stations, labels = cities))
+ds <- ds %>% mutate(city = factor(station, levels = stations, labels = cities))
 
 city_counts <- freq_table(ds, city)
 city_counts
